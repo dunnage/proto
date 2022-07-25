@@ -100,8 +100,12 @@
   [f ^CodedInputStream is]
   (let [len (.readRawVarint32 is)
         lim (.pushLimit is len)]
-    (prn :cis->embedded  len lim)
+    ;(prn :cis->embedded  len lim)
     (let [result (f is)]
+      (when-not (zero? (.getBytesUntilLimit is))
+        ;(prn :getBytesUntilLimit (.getBytesUntilLimit is))
+        (.readRawBytes is (.getBytesUntilLimit is)))
+
       (.popLimit is lim)
       result)))
 
@@ -139,9 +143,12 @@
   (reify IReduceInit
     (reduce [_ f init]
       (loop [acc init]
+        #_(prn :bul (.getBytesUntilLimit is))
         (if (and (not (.isAtEnd is))
                  (not (reduced? acc)))
-          (recur (f acc (fnext is)))
+          (let [x (try (f acc (fnext is))
+                       (catch Exception e (reduced acc)))]
+            (recur x))
           (unreduced acc))))))
 
 

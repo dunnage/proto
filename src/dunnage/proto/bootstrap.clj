@@ -6,7 +6,7 @@
              DescriptorProtos$FileDescriptorSet
              DescriptorProtos$DescriptorProto
              DescriptorProtos$FieldDescriptorProto
-             ProtocolMessageEnum DescriptorProtos$FileDescriptorProto DescriptorProtos$EnumDescriptorProtoOrBuilder DescriptorProtos$EnumDescriptorProto DescriptorProtos$EnumValueDescriptorProto)))
+             ProtocolMessageEnum DescriptorProtos$FileDescriptorProto DescriptorProtos$EnumDescriptorProtoOrBuilder DescriptorProtos$EnumDescriptorProto DescriptorProtos$EnumValueDescriptorProto DescriptorProtos$MessageOptionsOrBuilder)))
 
 (set! *print-namespace-maps* false)
 
@@ -16,14 +16,9 @@
       (clojure.string/join "." (butlast (rest parts)))
       (last parts))))
 
-(defn parse-enum [^DescriptorProtos$FieldDescriptorProto field]
-  ;(let [enum (.getDescriptorForType field)])
-  (prn (bean (.getDescriptorForType field)))
-  [:enum]
-  )
-
 (defn handle-type [^DescriptorProtos$FieldDescriptorProto field]
   (let [^ProtocolMessageEnum t (.getType field)]
+    ;(prn (.getOptions field))
     (case (.getNumber t)
       ; 0 is reserved for errors.
       ; Order is weird for historical reasons.
@@ -31,13 +26,13 @@
       2 'float?                                             ; TYPE_FLOAT
       ; Not ZigZag encoded.  Negative numbers take 10 bytes.  Use TYPE_SINT64 if
       ; negative values are likely.
-      3 'int?                                               ; TYPE_INT64
-      4 'int?                                               ; TYPE_UINT64
+      3 [:schema {:primitive "INT64"} 'int?]                                               ; TYPE_INT64
+      4 [:schema {:primitive "UINT64"} 'int?]                                               ; TYPE_UINT64
       ; Not ZigZag encoded.  Negative numbers take 10 bytes.  Use TYPE_SINT32 if
       ; negative values are likely.
-      5 'int?                                               ; TYPE_INT32
-      6 'int?                                               ; TYPE_FIXED64
-      7 'int?                                               ; TYPE_FIXED32
+      5 [:schema {:primitive "INT32"} 'int?]                                               ; TYPE_INT32
+      6 [:schema {:primitive "FIXED64"} 'int?]                                               ; TYPE_FIXED64
+      7 [:schema {:primitive "FIXED32"} 'int?]                                               ; TYPE_FIXED32
       8 'boolean?                                           ; TYPE_BOOL
       9 'string?                                            ; TYPE_STRING
       ; Tag-delimited aggregate.
@@ -49,12 +44,12 @@
 
       ; New in version 2.
       12 'bytes?                                            ; TYPE_BYTES
-      13 'int?                                              ; TYPE_UINT32
+      13 [:schema {:primitive "UINT32"} 'int?]                                              ; TYPE_UINT32
       14 [:ref (parse-type-name (.getTypeName field))]                                 ; TYPE_ENUM
-      15 'int?                                              ; TYPE_SFIXED32
-      16 'int?                                              ; TYPE_SFIXED64
-      17 'int?                                              ; TYPE_SINT32   ; // Uses ZigZag encoding.
-      18 'int?                                              ; TYPE_SINT64   ; // Uses ZigZag encoding.
+      15 [:schema {:primitive "SFIXED32"} 'int?]                                              ; TYPE_SFIXED32
+      16 [:schema {:primitive "SFIXED64"} 'int?]                                              ; TYPE_SFIXED64
+      17 [:schema {:primitive "SINT32"} 'int?]                                              ; TYPE_SINT32   ; // Uses ZigZag encoding.
+      18 [:schema {:primitive "SINT64"} 'int?]                                              ; TYPE_SINT64   ; // Uses ZigZag encoding.
       )))
 
 (defn field->kv [^DescriptorProtos$FieldDescriptorProto field]
@@ -68,20 +63,33 @@
        [:sequential t]
        t)]))
 
-(defn dproto->malli [protos registry]
+(defn dproto->malli [registry protos]
   (if (empty? protos)
     registry
     (let [[package dproto] (first protos)
-          subtypes (cond (or (instance? DescriptorProtos$DescriptorProto dproto)
-                             (instance? DescriptorProtos$FileDescriptorProto dproto))
+          subtypes (cond
+                     (instance? DescriptorProtos$DescriptorProto dproto)
+                         (do (assert (empty? (.getExtensionList dproto)))
+                             ;(assert (empty? (.getWeakDependencyList dproto)))
+                             ;(assert (empty? (.getPublicDependencyList dproto)))
+                             ;(prn (.getOptions dproto))
+                             (-> []
+                                 (into (map (fn [x] [(str package "." (.getName dproto)) x])) (.getNestedTypeList dproto))
+                                 (into (map (fn [x] [(str package "." (.getName dproto)) x])) (.getEnumTypeList dproto))
+                                 (into (map (fn [x] [(str package "." (.getName dproto)) x])) (.getOneofDeclList dproto))
+                                 ; (into (map (fn [x] [(str package "." (.getName dproto)) x])) (.getOptions dproto))
+
+                                 ))
+                     (instance? DescriptorProtos$MessageOptionsOrBuilder dproto)
+                     (do (assert (empty? (.getExtensionList dproto)))
+                         ;(assert (empty? (.getWeakDependencyList dproto)))
+                         ;(assert (empty? (.getPublicDependencyList dproto)))
                          (-> []
                              (into (map (fn [x] [(str package "." (.getName dproto)) x])) (.getNestedTypeList dproto))
-                             (into (map (fn [x] [(str package "." (.getName dproto)) x])) (.getEnumTypeList dproto)))
-                         :default [])]
+                             (into (map (fn [x] [(str package "." (.getName dproto)) x])) (.getEnumTypeList dproto))))
+
+                     :default [])]
       (recur
-        (cond-> (rest protos)
-                (not-empty subtypes)
-                (into subtypes))
         (assoc registry
           (keyword package (.getName dproto))
           (cond (or (instance? DescriptorProtos$DescriptorProto dproto)
@@ -91,14 +99,16 @@
                       (.getFieldList dproto))
                 (instance? DescriptorProtos$EnumDescriptorProto dproto)
                 (do
-                  (prn (.getValueList dproto) #_(bean dproto))
+                  ;(prn (.getValueList dproto) #_(bean dproto))
                   (into [:enum]
                         (map (fn [^DescriptorProtos$EnumValueDescriptorProto val]
-                               [(.getName val) {:number (.getNumber val)}]))
+                               [(.getName val) {:protobuf/fieldnumber (.getNumber val)}]))
                         (.getValueList dproto)))
                 ; :default [:any]
-                )
-          )))))
+                ))
+        (cond-> (rest protos)
+                (not-empty subtypes)
+                (into subtypes))))))
 
 
 (comment
@@ -112,6 +122,19 @@
   (.getMessageTypeList fdesc)
   (.getOptions fdesc)
   (def mtype (first (.getMessageTypeList fdesc)))
-  (dproto->malli (into [] (map (fn [x] [(.getPackage fdesc) x])) (.getMessageTypeList fdesc)) {})
-  (into {} (map (dproto->malli (.getPackage fdesc))) (.getMessageTypeList fdesc))
+  (dproto->malli  {} (into [] (map (fn [x] [(.getPackage fdesc) x])) (.getMessageTypeList fdesc)))
+  (transduce
+    (comp (map (fn [filelist]
+                 (mapv (fn [x] [(.getPackage filelist) x] ) (.getMessageTypeList filelist))
+                 )))
+    (completing dproto->malli)
+    {}
+    (.getFileList fdescset))
+
+  (into []
+        (comp (map (fn [filelist]
+                     (mapv (fn [x] [(.getPackage filelist) x] ) (.getMessageTypeList filelist))
+                     )))
+        (.getFileList fdescset))
+
   )

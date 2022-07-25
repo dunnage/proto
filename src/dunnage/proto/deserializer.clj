@@ -26,6 +26,17 @@
     :map true
     false))
 
+(defn enum-deserializer [schema]
+  (let [properties (m/properties  schema)
+        schema-values (m/children schema)
+        values  (into {} (map
+                           (juxt
+                             (comp :protobuf/fieldnumber #(nth % 1))
+                             #(nth % 0)))
+                      schema-values)]
+    (fn [^CodedInputStream is]
+      (values (serde/cis->Enum is))))
+  )
 (defn map-deserializer [schema referenced-deserializer]
   (let [properties (m/properties  schema)
         entries (m/children schema)
@@ -58,7 +69,7 @@
                            k (key-fn idx)
                            sub (sub-parser idx)
                            sub-seq? (sub-seq idx)]
-                       (prn k type)
+                       ;(prn k type)
                        (assert sub (pr-str idx wire-type fieldnumber tag   (keys sub-parser) type entries))
                        (recur (if sub-seq?
                                 (update acc k (case type
@@ -80,7 +91,21 @@
 
 (defn make-deserializer [schema referenced-deserializer]
   (case (m/type schema)
-    :schema (recur (nth (m/children schema) 0) referenced-deserializer)
+    :schema (case (:primitive (m/properties schema))
+              ;"DOUBLE" serde/cis->Double
+              ;"ENUM" serde/cis->Enum
+              "FIXED32" serde/cis->Fixed32
+              "FIXED64" serde/cis->Fixed64
+              ;"FLOAT" serde/cis->Float
+              "INT32" serde/cis->Int32
+              "INT64" serde/cis->Int64
+              "SFIXED32" serde/cis->SFixed32
+              "SFIXED64" serde/cis->SFixed64
+              "SINT32" serde/cis->SInt32
+              "SINT64" serde/cis->SInt64
+              "UINT32" serde/cis->UInt32
+              "UINT64" serde/cis->UInt64
+              nil  (recur (nth (m/children schema) 0) referenced-deserializer))
     :malli.core/schema (recur (nth (m/children schema) 0) referenced-deserializer)
     :ref (let [r (nth (m/children schema) 0)]
            (if-some [deser (get @referenced-deserializer r)]
@@ -94,7 +119,7 @@
                deser)))
     :map (map-deserializer schema referenced-deserializer)
     :sequential (seq-deserializer schema referenced-deserializer)
-    :enum  serde/cis->Enum
+    :enum  (enum-deserializer schema)
     string? serde/cis->String
     double? serde/cis->Double
     int? serde/cis->Int32

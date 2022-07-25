@@ -18,8 +18,12 @@
                                                         [:sequential [:ref :google.protobuf/UninterpretedOption]]]],
                :google.protobuf.SourceCodeInfo/Location [:map
                                                          {}
-                                                         [:path {:protobuf/fieldnumber 1, :optional true} [:sequential int?]]
-                                                         [:span {:protobuf/fieldnumber 2, :optional true} [:sequential int?]]
+                                                         [:path
+                                                          {:protobuf/fieldnumber 1, :optional true}
+                                                          [:sequential [:schema {:primitive "INT32"} int?]]]
+                                                         [:span
+                                                          {:protobuf/fieldnumber 2, :optional true}
+                                                          [:sequential [:schema {:primitive "INT32"} int?]]]
                                                          [:leading_comments {:protobuf/fieldnumber 3, :optional true} string?]
                                                          [:trailing_comments {:protobuf/fieldnumber 4, :optional true} string?]
                                                          [:leading_detached_comments
@@ -37,10 +41,13 @@
                                                {:protobuf/fieldnumber 999, :optional true}
                                                [:sequential [:ref :google.protobuf/UninterpretedOption]]]],
                :google.protobuf.FieldDescriptorProto/Label [:enum
-                                                            ["LABEL_OPTIONAL" {:number 1}]
-                                                            ["LABEL_REQUIRED" {:number 2}]
-                                                            ["LABEL_REPEATED" {:number 3}]],
-               :google.protobuf.FieldOptions/CType [:enum ["STRING" {:number 0}] ["CORD" {:number 1}] ["STRING_PIECE" {:number 2}]],
+                                                            ["LABEL_OPTIONAL" {:protobuf/fieldnumber 1}]
+                                                            ["LABEL_REQUIRED" {:protobuf/fieldnumber 2}]
+                                                            ["LABEL_REPEATED" {:protobuf/fieldnumber 3}]],
+               :google.protobuf.FieldOptions/CType [:enum
+                                                    ["STRING" {:protobuf/fieldnumber 0}]
+                                                    ["CORD" {:protobuf/fieldnumber 1}]
+                                                    ["STRING_PIECE" {:protobuf/fieldnumber 2}]],
                :google.protobuf/DescriptorProto [:map
                                                  {}
                                                  [:name {:protobuf/fieldnumber 1, :optional true} string?]
@@ -75,9 +82,9 @@
                                                     {:protobuf/fieldnumber 1, :optional true}
                                                     [:sequential [:ref :google.protobuf.GeneratedCodeInfo/Annotation]]]],
                :google.protobuf.FileOptions/OptimizeMode [:enum
-                                                          ["SPEED" {:number 1}]
-                                                          ["CODE_SIZE" {:number 2}]
-                                                          ["LITE_RUNTIME" {:number 3}]],
+                                                          ["SPEED" {:protobuf/fieldnumber 1}]
+                                                          ["CODE_SIZE" {:protobuf/fieldnumber 2}]
+                                                          ["LITE_RUNTIME" {:protobuf/fieldnumber 3}]],
                :google.protobuf/ServiceOptions [:map
                                                 {}
                                                 [:deprecated {:protobuf/fieldnumber 33, :optional true} boolean?]
@@ -85,24 +92,24 @@
                                                  {:protobuf/fieldnumber 999, :optional true}
                                                  [:sequential [:ref :google.protobuf/UninterpretedOption]]]],
                :google.protobuf.FieldDescriptorProto/Type [:enum
-                                                           ["TYPE_DOUBLE" {:number 1}]
-                                                           ["TYPE_FLOAT" {:number 2}]
-                                                           ["TYPE_INT64" {:number 3}]
-                                                           ["TYPE_UINT64" {:number 4}]
-                                                           ["TYPE_INT32" {:number 5}]
-                                                           ["TYPE_FIXED64" {:number 6}]
-                                                           ["TYPE_FIXED32" {:number 7}]
-                                                           ["TYPE_BOOL" {:number 8}]
-                                                           ["TYPE_STRING" {:number 9}]
-                                                           ["TYPE_GROUP" {:number 10}]
-                                                           ["TYPE_MESSAGE" {:number 11}]
-                                                           ["TYPE_BYTES" {:number 12}]
-                                                           ["TYPE_UINT32" {:number 13}]
-                                                           ["TYPE_ENUM" {:number 14}]
-                                                           ["TYPE_SFIXED32" {:number 15}]
-                                                           ["TYPE_SFIXED64" {:number 16}]
-                                                           ["TYPE_SINT32" {:number 17}]
-                                                           ["TYPE_SINT64" {:number 18}]],
+                                                           ["TYPE_DOUBLE" {:protobuf/fieldnumber 1}]
+                                                           ["TYPE_FLOAT" {:protobuf/fieldnumber 2}]
+                                                           ["TYPE_INT64" {:protobuf/fieldnumber 3}]
+                                                           ["TYPE_UINT64" {:protobuf/fieldnumber 4}]
+                                                           ["TYPE_INT32" {:protobuf/fieldnumber 5}]
+                                                           ["TYPE_FIXED64" {:protobuf/fieldnumber 6}]
+                                                           ["TYPE_FIXED32" {:protobuf/fieldnumber 7}]
+                                                           ["TYPE_BOOL" {:protobuf/fieldnumber 8}]
+                                                           ["TYPE_STRING" {:protobuf/fieldnumber 9}]
+                                                           ["TYPE_GROUP" {:protobuf/fieldnumber 10}]
+                                                           ["TYPE_MESSAGE" {:protobuf/fieldnumber 11}]
+                                                           ["TYPE_BYTES" {:protobuf/fieldnumber 12}]
+                                                           ["TYPE_UINT32" {:protobuf/fieldnumber 13}]
+                                                           ["TYPE_ENUM" {:protobuf/fieldnumber 14}]
+                                                           ["TYPE_SFIXED32" {:protobuf/fieldnumber 15}]
+                                                           ["TYPE_SFIXED64" {:protobuf/fieldnumber 16}]
+                                                           ["TYPE_SINT32" {:protobuf/fieldnumber 17}]
+                                                           ["TYPE_SINT64" {:protobuf/fieldnumber 18}]],
                :google.protobuf/MethodDescriptorProto [:map
                                                        {}
                                                        [:name {:protobuf/fieldnumber 1, :optional true} string?]
@@ -139,9 +146,9 @@
                                               {:protobuf/fieldnumber 999, :optional true}
                                               [:sequential [:ref :google.protobuf/UninterpretedOption]]]],
                :google.protobuf.MethodOptions/IdempotencyLevel [:enum
-                                                                ["IDEMPOTENCY_UNKNOWN" {:number 0}]
-                                                                ["NO_SIDE_EFFECTS" {:number 1}]
-                                                                ["IDEMPOTENT" {:number 2}]],
+                                                                ["IDEMPOTENCY_UNKNOWN" {:protobuf/fieldnumber 0}]
+                                                                ["NO_SIDE_EFFECTS" {:protobuf/fieldnumber 1}]
+                                                                ["IDEMPOTENT" {:protobuf/fieldnumber 2}]],
                :google.protobuf/EnumDescriptorProto [:map
                                                      {}
                                                      [:name {:protobuf/fieldnumber 1, :optional true} string?]
@@ -161,10 +168,16 @@
                                                               [:is_extension {:protobuf/fieldnumber 2} boolean?]],
                :google.protobuf.GeneratedCodeInfo/Annotation [:map
                                                               {}
-                                                              [:path {:protobuf/fieldnumber 1, :optional true} [:sequential int?]]
+                                                              [:path
+                                                               {:protobuf/fieldnumber 1, :optional true}
+                                                               [:sequential [:schema {:primitive "INT32"} int?]]]
                                                               [:source_file {:protobuf/fieldnumber 2, :optional true} string?]
-                                                              [:begin {:protobuf/fieldnumber 3, :optional true} int?]
-                                                              [:end {:protobuf/fieldnumber 4, :optional true} int?]],
+                                                              [:begin
+                                                               {:protobuf/fieldnumber 3, :optional true}
+                                                               [:schema {:primitive "INT32"} int?]]
+                                                              [:end
+                                                               {:protobuf/fieldnumber 4, :optional true}
+                                                               [:schema {:primitive "INT32"} int?]]],
                :google.protobuf/FileOptions [:map
                                              {}
                                              [:java_package {:protobuf/fieldnumber 1, :optional true} string?]
@@ -198,8 +211,12 @@
                                                       {:protobuf/fieldnumber 2, :optional true}
                                                       [:sequential [:ref :google.protobuf.UninterpretedOption/NamePart]]]
                                                      [:identifier_value {:protobuf/fieldnumber 3, :optional true} string?]
-                                                     [:positive_int_value {:protobuf/fieldnumber 4, :optional true} int?]
-                                                     [:negative_int_value {:protobuf/fieldnumber 5, :optional true} int?]
+                                                     [:positive_int_value
+                                                      {:protobuf/fieldnumber 4, :optional true}
+                                                      [:schema {:primitive "UINT64"} int?]]
+                                                     [:negative_int_value
+                                                      {:protobuf/fieldnumber 5, :optional true}
+                                                      [:schema {:primitive "INT64"} int?]]
                                                      [:double_value {:protobuf/fieldnumber 6, :optional true} double?]
                                                      [:string_value {:protobuf/fieldnumber 7, :optional true} bytes?]
                                                      [:aggregate_value {:protobuf/fieldnumber 8, :optional true} string?]],
@@ -215,8 +232,10 @@
                                                      [:dependency {:protobuf/fieldnumber 3, :optional true} [:sequential string?]]
                                                      [:public_dependency
                                                       {:protobuf/fieldnumber 10, :optional true}
-                                                      [:sequential int?]]
-                                                     [:weak_dependency {:protobuf/fieldnumber 11, :optional true} [:sequential int?]]
+                                                      [:sequential [:schema {:primitive "INT32"} int?]]]
+                                                     [:weak_dependency
+                                                      {:protobuf/fieldnumber 11, :optional true}
+                                                      [:sequential [:schema {:primitive "INT32"} int?]]]
                                                      [:message_type
                                                       {:protobuf/fieldnumber 4, :optional true}
                                                       [:sequential [:ref :google.protobuf/DescriptorProto]]]
@@ -239,14 +258,20 @@
                :google.protobuf/EnumValueDescriptorProto [:map
                                                           {}
                                                           [:name {:protobuf/fieldnumber 1, :optional true} string?]
-                                                          [:number {:protobuf/fieldnumber 2, :optional true} int?]
+                                                          [:number
+                                                           {:protobuf/fieldnumber 2, :optional true}
+                                                           [:schema {:primitive "INT32"} int?]]
                                                           [:options
                                                            {:protobuf/fieldnumber 3, :optional true}
                                                            [:ref :google.protobuf/EnumValueOptions]]],
                :google.protobuf.DescriptorProto/ReservedRange [:map
                                                                {}
-                                                               [:start {:protobuf/fieldnumber 1, :optional true} int?]
-                                                               [:end {:protobuf/fieldnumber 2, :optional true} int?]],
+                                                               [:start
+                                                                {:protobuf/fieldnumber 1, :optional true}
+                                                                [:schema {:primitive "INT32"} int?]]
+                                                               [:end
+                                                                {:protobuf/fieldnumber 2, :optional true}
+                                                                [:schema {:primitive "INT32"} int?]]],
                :google.protobuf/ServiceDescriptorProto [:map
                                                         {}
                                                         [:name {:protobuf/fieldnumber 1, :optional true} string?]
@@ -258,8 +283,12 @@
                                                          [:ref :google.protobuf/ServiceOptions]]],
                :google.protobuf.EnumDescriptorProto/EnumReservedRange [:map
                                                                        {}
-                                                                       [:start {:protobuf/fieldnumber 1, :optional true} int?]
-                                                                       [:end {:protobuf/fieldnumber 2, :optional true} int?]],
+                                                                       [:start
+                                                                        {:protobuf/fieldnumber 1, :optional true}
+                                                                        [:schema {:primitive "INT32"} int?]]
+                                                                       [:end
+                                                                        {:protobuf/fieldnumber 2, :optional true}
+                                                                        [:schema {:primitive "INT32"} int?]]],
                :google.protobuf/FileDescriptorSet [:map
                                                    {}
                                                    [:file
@@ -268,7 +297,9 @@
                :google.protobuf/FieldDescriptorProto [:map
                                                       {}
                                                       [:name {:protobuf/fieldnumber 1, :optional true} string?]
-                                                      [:number {:protobuf/fieldnumber 3, :optional true} int?]
+                                                      [:number
+                                                       {:protobuf/fieldnumber 3, :optional true}
+                                                       [:schema {:primitive "INT32"} int?]]
                                                       [:label
                                                        {:protobuf/fieldnumber 4, :optional true}
                                                        [:ref :google.protobuf.FieldDescriptorProto/Label]]
@@ -278,16 +309,18 @@
                                                       [:type_name {:protobuf/fieldnumber 6, :optional true} string?]
                                                       [:extendee {:protobuf/fieldnumber 2, :optional true} string?]
                                                       [:default_value {:protobuf/fieldnumber 7, :optional true} string?]
-                                                      [:oneof_index {:protobuf/fieldnumber 9, :optional true} int?]
+                                                      [:oneof_index
+                                                       {:protobuf/fieldnumber 9, :optional true}
+                                                       [:schema {:primitive "INT32"} int?]]
                                                       [:json_name {:protobuf/fieldnumber 10, :optional true} string?]
                                                       [:options
                                                        {:protobuf/fieldnumber 8, :optional true}
                                                        [:ref :google.protobuf/FieldOptions]]
                                                       [:proto3_optional {:protobuf/fieldnumber 17, :optional true} boolean?]],
                :google.protobuf.FieldOptions/JSType [:enum
-                                                     ["JS_NORMAL" {:number 0}]
-                                                     ["JS_STRING" {:number 1}]
-                                                     ["JS_NUMBER" {:number 2}]],
+                                                     ["JS_NORMAL" {:protobuf/fieldnumber 0}]
+                                                     ["JS_STRING" {:protobuf/fieldnumber 1}]
+                                                     ["JS_NUMBER" {:protobuf/fieldnumber 2}]],
                :google.protobuf/FieldOptions [:map
                                               {}
                                               [:ctype
@@ -306,12 +339,15 @@
                                                [:sequential [:ref :google.protobuf/UninterpretedOption]]]],
                :google.protobuf.DescriptorProto/ExtensionRange [:map
                                                                 {}
-                                                                [:start {:protobuf/fieldnumber 1, :optional true} int?]
-                                                                [:end {:protobuf/fieldnumber 2, :optional true} int?]
+                                                                [:start
+                                                                 {:protobuf/fieldnumber 1, :optional true}
+                                                                 [:schema {:primitive "INT32"} int?]]
+                                                                [:end
+                                                                 {:protobuf/fieldnumber 2, :optional true}
+                                                                 [:schema {:primitive "INT32"} int?]]
                                                                 [:options
                                                                  {:protobuf/fieldnumber 3, :optional true}
-                                                                 [:ref :google.protobuf/ExtensionRangeOptions]]]}
-              }
+                                                                 [:ref :google.protobuf/ExtensionRangeOptions]]]}}
      :google.protobuf/FileDescriptorSet]))
 
 
