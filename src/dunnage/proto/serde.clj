@@ -1,6 +1,7 @@
 (ns dunnage.proto.serde
   ; (:require)
-  (:require [clojure.java.io :as io])
+  (:require [clojure.java.io :as io]
+            [clojure.pprint :as pprint])
   (:import (com.google.protobuf CodedInputStream
                                 CodedOutputStream
                                 WireFormat
@@ -28,13 +29,14 @@
         optimized-name (symbol (str "write-optimized-" type))
         sym (symbol (str "write" type))
         doc (format "Serialize a '%s' type" type)]
-    `(defn ~name ~doc
-       [tag# value# ^CodedOutputStream os#]
-       (. os# ~sym tag# value#))
-    `(defn ~optimized-name ~doc
-       [tag# value# ^CodedOutputStream os#]
-       (when-not (~default? value#)
-         (~name tag# value# ^CodedOutputStream os#)))))
+    `(do
+      (defn ~name ~doc
+         [tag# value# ^CodedOutputStream os#]
+         (. os# ~sym tag# value#))
+      (defn ~optimized-name ~doc
+         [tag# value# ^CodedOutputStream os#]
+         (when-not (~default? value#)
+           (. os# ~sym tag# value#))))))
 
 (defmacro defserdes [type default?]
   `(do
@@ -42,7 +44,7 @@
      (defwritefn ~type ~default?)))
 
 (defmacro defscalar [type]
-  `(defserdes ~type default-scalar?))
+  `(defserdes ~type `default-scalar?))
 
 (defscalar "Double")
 (defscalar "Enum")
