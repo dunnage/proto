@@ -100,6 +100,7 @@
   [f ^CodedInputStream is]
   (let [len (.readRawVarint32 is)
         lim (.pushLimit is len)]
+    (prn :cis->embedded  len lim)
     (let [result (f is)]
       (.popLimit is lim)
       result)))
@@ -140,8 +141,7 @@
       (loop [acc init]
         (if (and (not (.isAtEnd is))
                  (not (reduced? acc)))
-          (let [next-entry (fnext is)]
-            (recur (f acc next-entry)))
+          (recur (f acc (fnext is)))
           (unreduced acc))))))
 
 

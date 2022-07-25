@@ -96,7 +96,8 @@
                         (map (fn [^DescriptorProtos$EnumValueDescriptorProto val]
                                [(.getName val) {:number (.getNumber val)}]))
                         (.getValueList dproto)))
-                :default [:any])
+                ; :default [:any]
+                )
           )))))
 
 

@@ -10,6 +10,22 @@
                                 ByteString)))
 (declare make-deserializer)
 
+(defn sequence? [schema]
+  (case (m/type schema)
+    :schema (recur (nth (m/children schema) 0))
+    :malli.core/schema (recur (nth (m/children schema) 0))
+    :ref (recur (m/deref schema))
+    :sequential true
+    false))
+
+(defn submessage? [schema]
+  (case (m/type schema)
+    :schema (recur (nth (m/children schema) 0))
+    :malli.core/schema (recur (nth (m/children schema) 0))
+    :ref (recur (m/deref schema))
+    :map true
+    false))
+
 (defn map-deserializer [schema referenced-deserializer]
   (let [properties (m/properties  schema)
         entries (m/children schema)
@@ -21,29 +37,46 @@
         sub-parser (into {} (map
                               (juxt
                                 (comp :protobuf/fieldnumber #(nth % 1))
-                                #(make-deserializer (nth % 2) referenced-deserializer)))
+                                #(let [subtype (nth % 2)
+                                       deser (make-deserializer subtype referenced-deserializer)]
+                                   (if (submessage? subtype)
+                                     (fn [^CodedInputStream is] (serde/cis->embedded deser is))
+                                     deser))))
+                         entries)
+        sub-seq  (into {} (map
+                              (juxt
+                                (comp :protobuf/fieldnumber #(nth % 1))
+                                #(sequence? (nth % 2))))
                          entries)
         subfn  (fn [^CodedInputStream is]
                  (loop [acc {} tag (.readTag ^CodedInputStream is)]
                    (if (pos? tag)
                      (let [idx (bit-shift-right tag 3)
                            wire-type (WireFormat/getTagWireType tag)
+                           fieldnumber (WireFormat/getTagFieldNumber tag)
                            type (bit-and 0x2 tag)
                            k (key-fn idx)
-                           sub (sub-parser idx)]
-                       (assert sub (pr-str idx tag ))
-                       (recur (update acc k (sub is))
+                           sub (sub-parser idx)
+                           sub-seq? (sub-seq idx)]
+                       (prn k type)
+                       (assert sub (pr-str idx wire-type fieldnumber tag   (keys sub-parser) type entries))
+                       (recur (if sub-seq?
+                                (update acc k (case type
+                                                0 (serde/cis->repeated sub is)
+                                                2 (serde/cis->packedrepeated sub is)
+                                                ;(sub is)
+                                                ))
+                                (assoc acc k (sub is)))
                               (.readTag ^CodedInputStream is)))
                      acc)))]
-    #(serde/cis->embedded subfn %)))
+    #_(serde/cis->embedded subfn %)
+    subfn))
 
 (defn seq-deserializer [schema referenced-deserializer]
   (let [properties (m/properties  schema)
         subschema (nth (m/children schema) 0)
         subdeser  (make-deserializer subschema referenced-deserializer)]
-    (if (:packed properties)
-      #(serde/cis->packedrepeated subdeser %)
-      #(serde/cis->repeated subdeser %))))
+    subdeser))
 
 (defn make-deserializer [schema referenced-deserializer]
   (case (m/type schema)
