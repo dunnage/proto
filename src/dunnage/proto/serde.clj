@@ -17,6 +17,9 @@
 (def default-bytes? empty?)
 (def default-bool? #(not (true? %)))
 
+(defn make-tag [^long field ^long  wire-type]
+  (bit-or (bit-shift-left field 3) wire-type))
+
 (defmacro defparsefn [type]
   (let [name (symbol (str "cis->" type))
         sym (symbol (str "read" type))
@@ -146,8 +149,7 @@
         #_(prn :bul (.getBytesUntilLimit is))
         (if (and (not (.isAtEnd is))
                  (not (reduced? acc)))
-          (let [x (try (f acc (fnext is))
-                       (catch Exception e (reduced acc)))]
+          (let [x (f acc (fnext is))]
             (recur x))
           (unreduced acc))))))
 
@@ -158,18 +160,6 @@
   [f is]
   (fn [coll]
     (cis->embedded #(into (or coll []) (repeated-reducible f %)) is)))
-
-(defn cis->packablerepeated
-  "
-  Deserialize a repeated type which may optionally support [packed format](https://developers.google.com/protocol-buffers/docs/encoding#packed).
-  The field type will indicate unpacked (0) vs packed (2).
-  "
-  [tag f is]
-  (let [type (bit-and 0x2 tag)]
-    (case type
-      0 (cis->repeated f is)
-      2 (cis->packedrepeated f is)
-      (cis->undefined tag is))))
 
 ;; FIXME: Add support for optimizing packable types
 (defn write-repeated
