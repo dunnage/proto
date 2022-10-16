@@ -14,11 +14,11 @@
 (defn schema->wire-type [schema packed]
   (case (m/type schema)
     :schema (recur (nth (m/children schema) 0) packed)
-    :malli.core/schema (recur (nth (m/children schema) 0) packed )
+    :malli.core/schema (recur (nth (m/children schema) 0) packed)
     :ref (recur (m/deref schema) packed)
     :map 2
     :sequential 2
-    :enum  0
+    :enum 0
     string? 2
     double? 1
     float? 5
@@ -35,7 +35,7 @@
     "TYPE_UINT64" 0
     "TYPE_INT32" 0
     "TYPE_FIXED64" 1
-    "TYPE_FIXED32"5
+    "TYPE_FIXED32" 5
     "TYPE_BOOL" 0
     "TYPE_STRING" 2
     ;"TYPE_GROUP"
@@ -103,19 +103,19 @@
     false))
 
 (defn enum-deserializer [schema]
-  (let [properties (m/properties  schema)
+  (let [properties (m/properties schema)
         schema-values (m/children schema)
-        values  (into {} (map
-                           (juxt
-                             (comp :protobuf/fieldnumber #(nth % 1))
-                             #(nth % 0)))
-                      schema-values)]
+        values (into {} (map
+                          (juxt
+                            (comp :protobuf/fieldnumber #(nth % 1))
+                            #(nth % 0)))
+                     schema-values)]
     (fn [^CodedInputStream is]
       (values (serde/cis->Enum is))))
   )
 (def vconj (fnil conj []))
 (defn map-deserializer [schema referenced-deserializer]
-  (let [properties (m/properties  schema)
+  (let [properties (m/properties schema)
         entries (m/children schema)
         sub-parser (reduce
                      (fn [acc [k {:keys [protobuf/fieldnumber primitive]} subtype :as entry]]
@@ -130,7 +130,7 @@
                                    (assoc (serde/make-tag fieldnumber wire-type)
                                           (fn [acc ^CodedInputStream is]
                                             (update acc k (serde/cis->repeated deser is))))
-                                   (case primitive ;do not parse non-packed form for string and bytes
+                                   (case primitive          ;do not parse non-packed form for string and bytes
                                      ("TYPE_STRING" "TYPE_BYTES") false
                                      true)
                                    (assoc (serde/make-tag fieldnumber 2)
@@ -145,7 +145,7 @@
                                         (fn [acc ^CodedInputStream is]
                                           (assoc acc k (deser is))))))))
                      {}
-                         entries)]
+                     entries)]
     (fn [^CodedInputStream is]
       (loop [acc {} tag (.readTag ^CodedInputStream is)]
         (if (pos? tag)
@@ -157,9 +157,9 @@
           acc)))))
 
 (defn seq-deserializer [schema referenced-deserializer]
-  (let [properties (m/properties  schema)
+  (let [properties (m/properties schema)
         subschema (nth (m/children schema) 0)
-        subdeser  (make-deserializer subschema referenced-deserializer)]
+        subdeser (make-deserializer subschema referenced-deserializer)]
     subdeser))
 
 (defn make-deserializer [schema referenced-deserializer]
@@ -178,7 +178,7 @@
                (get @referenced-deserializer r))))
     :map (map-deserializer schema referenced-deserializer)
     :sequential (seq-deserializer schema referenced-deserializer)
-    :enum  (enum-deserializer schema)
+    :enum (enum-deserializer schema)
     string? serde/cis->String
     double? serde/cis->Double
     int? serde/cis->Int32
@@ -196,7 +196,5 @@
     (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset.out")))))
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "handshaker.descriptorset"))))
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "transport_security_common.descriptorset"))))
-
-
 
   )
