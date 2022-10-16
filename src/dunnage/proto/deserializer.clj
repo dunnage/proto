@@ -190,8 +190,13 @@
 
 (comment
   (require 'dunnage.proto.schema)
-  (let [deser (make-deserializer dunnage.proto.schema/descriptor (atom {}))
-        is (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset")))]
-    (deser is))
+  (def deser (make-deserializer dunnage.proto.schema/descriptor (atom {})))
+
+  (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset"))))
+  (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset.out"))))
+  (deser (CodedInputStream/newInstance (io/input-stream (io/resource "handshaker.descriptorset"))))
+  (deser (CodedInputStream/newInstance (io/input-stream (io/resource "transport_security_common.descriptorset"))))
+
+
 
   )
