@@ -113,6 +113,7 @@
     (fn [^CodedInputStream is]
       (values (serde/cis->Enum is))))
   )
+(def vconj (fnil conj []))
 (defn map-deserializer [schema referenced-deserializer]
   (let [properties (m/properties  schema)
         entries (m/children schema)
@@ -128,11 +129,11 @@
                              "TYPE_MESSAGE"
                              (assoc acc (serde/make-tag fieldnumber wire-type)
                                         (fn [acc ^CodedInputStream is]
-                                          (update acc k conj (serde/cis->embedded deser is))))
+                                          (update acc k vconj (serde/cis->embedded deser is))))
                              ("TYPE_STRING" "TYPE_BYTES")
                              (assoc acc (serde/make-tag fieldnumber wire-type)
                                         (fn [acc ^CodedInputStream is]
-                                          (update acc k conj (deser is))))
+                                          (update acc k vconj (deser is))))
                              (assoc acc (serde/make-tag fieldnumber wire-type)
                                         (fn [acc ^CodedInputStream is]
                                           (update acc k (serde/cis->repeated deser is)))
@@ -194,12 +195,9 @@
 
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset"))))
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset.out"))))
-
-  (clojure.data/diff
+  (=
     (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset"))))
-    (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset.out"))))
-
-    )
+    (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset.out")))))
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "handshaker.descriptorset"))))
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "transport_security_common.descriptorset"))))
 
