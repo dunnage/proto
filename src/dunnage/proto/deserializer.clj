@@ -125,21 +125,17 @@
                                      "TYPE_ENUM" (make-deserializer subtype referenced-deserializer)
                                      (primitive-parser primitive))]
                          (if (sequence? subtype)
-                           (case primitive
-                             "TYPE_MESSAGE"
-                             (assoc acc (serde/make-tag fieldnumber wire-type)
-                                        (fn [acc ^CodedInputStream is]
-                                          (update acc k vconj (serde/cis->embedded deser is))))
-                             ("TYPE_STRING" "TYPE_BYTES")
-                             (assoc acc (serde/make-tag fieldnumber wire-type)
-                                        (fn [acc ^CodedInputStream is]
-                                          (update acc k vconj (deser is))))
-                             (assoc acc (serde/make-tag fieldnumber wire-type)
-                                        (fn [acc ^CodedInputStream is]
-                                          (update acc k (serde/cis->repeated deser is)))
-                                        (serde/make-tag fieldnumber 2)
-                                        (fn [acc ^CodedInputStream is]
-                                          (update acc k (serde/cis->packedrepeated deser is)))))
+                           (cond-> acc
+                                   (not= primitive "TYPE_MESSAGE") ;do not parse packed form for message
+                                   (assoc (serde/make-tag fieldnumber wire-type)
+                                          (fn [acc ^CodedInputStream is]
+                                            (update acc k (serde/cis->repeated deser is))))
+                                   (case primitive ;do not parse non-packed form for string and bytes
+                                     ("TYPE_STRING" "TYPE_BYTES") false
+                                     true)
+                                   (assoc (serde/make-tag fieldnumber 2)
+                                          (fn [acc ^CodedInputStream is]
+                                            (update acc k (serde/cis->packedrepeated deser is)))))
                            (case primitive
                              "TYPE_MESSAGE"
                              (assoc acc (serde/make-tag fieldnumber wire-type)
