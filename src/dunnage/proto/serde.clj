@@ -129,24 +129,6 @@
       (.writeUInt32NoTag os len)
       (.writeRawBytes os (bytes data)))))
 
-(defn write-embedded-without-tag
-  "Serialize an embedded type along with tag/length metadata"
-  [serializer item ^CodedOutputStream os]
-  (when (some? item)
-    (let [data (pb-bytes serializer item)
-          len (count data)]
-      ;(.writeTag os tag 2);; embedded messages are always type=2 (string)
-      (.writeUInt32NoTag os len)
-      (.writeRawBytes os (bytes data)))))
-
-
-
-(defn cis->map
-  "Deserialize a wire format map-type to user format [key val]"
-  [f is]
-  (let [{:keys [key value]} (f is)]
-    (partial into {key value})))
-
 (defn cis->repeated
   "Deserialize an 'unpacked' repeated type (see [[cis->packablerepeated]])"
   [f is]
@@ -178,8 +160,3 @@
   [f tag items os]
   (doseq [item items]
     (f tag item os)))
-
-(defn write-map
-  "Serialize user format [key val] using given map item constructor"
-  [constructor tag items os]
-  (write-repeated write-embedded tag (map (fn [[key value]] (constructor {:key key :value value})) items) os))
