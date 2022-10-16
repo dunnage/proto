@@ -110,9 +110,19 @@
                 (not-empty subtypes)
                 (into subtypes))))))
 
+(defn descset->malli [descset]
+  (transduce
+    (comp (map (fn [filelist]
+                 (mapv (fn [x] [(.getPackage filelist) x] ) (.getMessageTypeList filelist))
+                 )))
+    (completing dproto->malli)
+    {}
+    (.getFileList descset)))
+
 
 (comment
   (def fdescset (DescriptorProtos$FileDescriptorSet/parseFrom (io/input-stream (io/resource "descriptor.descriptorset"))))
+  (def fdescset (DescriptorProtos$FileDescriptorSet/parseFrom (io/input-stream (io/resource "descriptor.descriptorset.out"))))
   (def fdesc (first (.getFileList fdescset)))
   (.getName fdesc)
   (.getPackage fdesc)
@@ -122,19 +132,7 @@
   (.getMessageTypeList fdesc)
   (.getOptions fdesc)
   (def mtype (first (.getMessageTypeList fdesc)))
-  (dproto->malli  {} (into [] (map (fn [x] [(.getPackage fdesc) x])) (.getMessageTypeList fdesc)))
-  (transduce
-    (comp (map (fn [filelist]
-                 (mapv (fn [x] [(.getPackage filelist) x] ) (.getMessageTypeList filelist))
-                 )))
-    (completing dproto->malli)
-    {}
-    (.getFileList fdescset))
 
-  (into []
-        (comp (map (fn [filelist]
-                     (mapv (fn [x] [(.getPackage filelist) x] ) (.getMessageTypeList filelist))
-                     )))
-        (.getFileList fdescset))
+  (descset->malli fdescset)
 
   )
