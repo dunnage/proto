@@ -1,6 +1,7 @@
 (ns dunnage.proto.deserializer
   (:require [dunnage.proto.serde :as serde]
             [malli.core :as m]
+            [clojure.data]
             [clojure.java.io :as io])
   (:import (com.google.protobuf CodedInputStream
                                 CodedOutputStream
@@ -26,7 +27,7 @@
     bytes? 2
     boolean? 0))
 
-(defn x [primitive]
+(defn primitive->wire-type [primitive]
   (case primitive
     "TYPE_DOUBLE" 1
     "TYPE_FLOAT" 5
@@ -116,9 +117,8 @@
   (let [properties (m/properties  schema)
         entries (m/children schema)
         sub-parser (reduce
-                     (fn [acc[k {:keys [protobuf/fieldnumber primitive]} subtype :as entry]]
-                       (let [wire-type (schema->wire-type subtype false)
-                             wire-type-packed (schema->wire-type subtype true)
+                     (fn [acc [k {:keys [protobuf/fieldnumber primitive]} subtype :as entry]]
+                       (let [wire-type (primitive->wire-type primitive)
                              deser (case primitive
                                      "TYPE_MESSAGE" (make-deserializer subtype referenced-deserializer)
                                      "TYPE_ENUM" (make-deserializer subtype referenced-deserializer)
@@ -136,7 +136,7 @@
                              (assoc acc (serde/make-tag fieldnumber wire-type)
                                         (fn [acc ^CodedInputStream is]
                                           (update acc k (serde/cis->repeated deser is)))
-                                        (serde/make-tag fieldnumber wire-type-packed)
+                                        (serde/make-tag fieldnumber 2)
                                         (fn [acc ^CodedInputStream is]
                                           (update acc k (serde/cis->packedrepeated deser is)))))
                            (case primitive
@@ -153,7 +153,7 @@
       (loop [acc {} tag (.readTag ^CodedInputStream is)]
         (if (pos? tag)
           (let [sub (sub-parser tag)]
-            ; (prn tag acc)
+            ;  (prn tag  sub-parser)
             (assert sub (pr-str tag (keys sub-parser) entries))
             (recur (sub acc is)
                    (.readTag ^CodedInputStream is)))
@@ -194,6 +194,12 @@
 
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset"))))
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset.out"))))
+
+  (clojure.data/diff
+    (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset"))))
+    (deser (CodedInputStream/newInstance (io/input-stream (io/resource "descriptor.descriptorset.out"))))
+
+    )
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "handshaker.descriptorset"))))
   (deser (CodedInputStream/newInstance (io/input-stream (io/resource "transport_security_common.descriptorset"))))
 

@@ -34,12 +34,12 @@
         doc (format "Serialize a '%s' type" type)]
     `(do
       (defn ~name ~doc
-         [tag# value# ^CodedOutputStream os#]
-         (. os# ~sym tag# value#))
+         [field-number# value# ^CodedOutputStream os#]
+         (. os# ~sym field-number# value#))
       (defn ~optimized-name ~doc
-         [tag# value# ^CodedOutputStream os#]
+         [field-number# value# ^CodedOutputStream os#]
          (when-not (~default? value#)
-           (. os# ~sym tag# value#))))))
+           (. os# ~sym field-number# value#))))))
 
 (defmacro defserdes [type default?]
   `(do
@@ -74,16 +74,16 @@
 
 (defn write-Bytes
   "Serialize 'Bytes' type"
-  [tag value ^CodedOutputStream os]
+  [field-number value ^CodedOutputStream os]
   (let [bytestring (ByteString/copyFrom (bytes value))]
-    (.writeBytes os tag bytestring)))
+    (.writeBytes os field-number bytestring)))
 
 (defn write-optimized-Bytes
   "Serialize 'Bytes' type"
-  [tag value ^CodedOutputStream os]
+  [field-number value ^CodedOutputStream os]
   (when-not (empty? value)
     (let [bytestring (ByteString/copyFrom (bytes value))]
-      (.writeBytes os tag bytestring))))
+      (.writeBytes os field-number bytestring))))
 
 (defn cis->undefined
   "Deserialize an unknown type, retaining its tag/type"
@@ -116,15 +116,26 @@
   (let [bos (ByteArrayOutputStream.)
         os ^CodedOutputStream  (CodedOutputStream/newInstance bos)]
     (serializer item os)
+    (.flush os)
     (.toByteArray bos)))
 
 (defn write-embedded
   "Serialize an embedded type along with tag/length metadata"
-  [tag serializer item ^CodedOutputStream os]
+  [field-number serializer item ^CodedOutputStream os]
   (when (some? item)
     (let [data (pb-bytes serializer item)
           len (count data)]
-      (.writeTag os tag 2);; embedded messages are always type=2 (string)
+      (.writeTag os field-number 2);; embedded messages are always type=2 (string)
+      (.writeUInt32NoTag os len)
+      (.writeRawBytes os (bytes data)))))
+
+(defn write-embedded-without-tag
+  "Serialize an embedded type along with tag/length metadata"
+  [serializer item ^CodedOutputStream os]
+  (when (some? item)
+    (let [data (pb-bytes serializer item)
+          len (count data)]
+      ;(.writeTag os tag 2);; embedded messages are always type=2 (string)
       (.writeUInt32NoTag os len)
       (.writeRawBytes os (bytes data)))))
 

@@ -7,7 +7,8 @@
                                 WireFormat
                                 UnknownFieldSet
                                 ExtensionRegistry
-                                ByteString)))
+                                ByteString)
+           (java.io ByteArrayOutputStream)))
 (declare make-serializer)
 ;0	Varint	int32, int64, uint32, uint64, sint32, sint64, bool, enum
 ;1	64-bit	fixed64, sfixed64, double
@@ -49,7 +50,7 @@
     :map true
     false))
 
-(defn enum-serializer [schema]
+(defn enum-serializer [schema outer?]
   (let [properties (m/properties schema)
         schema-values (m/children schema)
         values (into {} (map
@@ -57,14 +58,14 @@
                             #(nth % 0)
                             (comp :protobuf/fieldnumber #(nth % 1))))
                      schema-values)]
-    (fn [tag val ^CodedOutputStream os]
-      (serde/write-Enum tag (values val) os)
+    (fn [field-number val ^CodedOutputStream os]
+      (serde/write-Enum field-number (values val) os)
       ))
   )
 
 
 
-(defn map-serializer [schema referenced-serializer]
+(defn map-serializer [schema referenced-serializer outer?]
   (let [properties (m/properties schema)
         entries (m/children schema)
         sub-serializer (into {} (map
@@ -72,11 +73,11 @@
                                     #(nth % 0)
                                     #(let [subtype (nth % 2)
                                            fieldnumber ^int (:protobuf/fieldnumber (nth % 1))
-                                           ser (make-serializer subtype referenced-serializer)
-                                           tag (serde/make-tag fieldnumber (schema->wire-type subtype true))]
+                                           ser (make-serializer subtype referenced-serializer false)
+                                           tag (serde/make-tag fieldnumber (schema->wire-type subtype false))]
                                        (fn [val os]
                                          ;(prn tag subtype fieldnumber)
-                                         (ser tag val os)))))
+                                         (ser fieldnumber val os)))))
                              entries)
         ser-map (fn [val ^CodedOutputStream os]
                   (reduce-kv
@@ -85,40 +86,49 @@
                         (ser v os)))
                     nil
                     val))]
-    (fn [tag val ^CodedOutputStream os]
-      (serde/write-embedded tag ser-map val os)
-      )))
+    (if outer?
+      (fn [val ^CodedOutputStream os]
+        ;(serde/write-embedded 10 ser-map val os)
+        ;(serde/write-embedded-without-tag ser-map val os)
+        ; (prn :sermap val)
+        (ser-map val os)
+        )
+      (fn [fieldnumber val ^CodedOutputStream os]
+        (;prn :sermap tag val
+          )
+        (serde/write-embedded fieldnumber ser-map val os)
+        ))))
 
-(defn seq-serializer [schema referenced-serializer]
+(defn seq-serializer [schema referenced-serializer outer?]
   (let [properties (m/properties schema)
         subschema (nth (m/children schema) 0)
-        subdeser (make-serializer subschema referenced-serializer)]
-    (fn [tag vals os]
-      (serde/write-repeated subdeser tag vals os))))
+        subdeser (make-serializer subschema referenced-serializer outer?)]
+    (fn [field-number vals os]
+      (serde/write-repeated subdeser field-number vals os))))
 
 ;(defn tagged-write [schema ser]
 ;  (let [fieldnumber ^int (:protobuf/fieldnumber schema)
 ;        tag (serde/make-tag fieldnumber (schema->wire-type subtype true))]
 ;    (fn [val os]
-;        (ser tag val os)))
+;        (ser field-number val os)))
 ;  )
-(defn make-serializer [schema referenced-serializer]
+(defn make-serializer [schema referenced-serializer outer?]
   (case (m/type schema)
-    :schema (recur (nth (m/children schema) 0) referenced-serializer)
-    :malli.core/schema (recur (nth (m/children schema) 0) referenced-serializer)
+    :schema (recur (nth (m/children schema) 0) referenced-serializer outer?)
+    :malli.core/schema (recur (nth (m/children schema) 0) referenced-serializer outer?)
     :ref (let [r (nth (m/children schema) 0)]
            (if-some [ser (get @referenced-serializer r)]
              ser
-             (let [ser (fn [tag value cos]
+             (let [ser (fn [field-number value cos]
                          (let [deser (get @referenced-serializer r)]
-                           (deser tag value cos)))]
+                           (deser field-number value cos)))]
                ;add stub
                (swap! referenced-serializer assoc r ser)
-               (swap! referenced-serializer assoc r (make-serializer (m/deref schema) referenced-serializer))
+               (swap! referenced-serializer assoc r (make-serializer (m/deref schema) referenced-serializer outer?))
                ser)))
-    :map (map-serializer schema referenced-serializer)
-    :sequential (seq-serializer schema referenced-serializer)
-    :enum (enum-serializer schema)
+    :map (map-serializer schema referenced-serializer outer?)
+    :sequential (seq-serializer schema referenced-serializer outer?)
+    :enum (enum-serializer schema outer?)
     string? serde/write-String
     double? serde/write-Double
     int? serde/write-Int32
@@ -130,8 +140,16 @@
 
 (comment
   (require 'dunnage.proto.schema)
-  (let [ser (make-serializer dunnage.proto.schema/descriptor (atom {}))
-        os (CodedOutputStream/newInstance (io/output-stream (io/file "dev-resources/descriptor.descriptorset.out")))]
-    (ser 1 temp os))
+  (let [ser (make-serializer dunnage.proto.schema/descriptor (atom {}) true)]
+    (let [;os (ByteArrayOutputStream.)
+          ;cos (CodedOutputStream/newInstance os)
+          cos (CodedOutputStream/newInstance (io/output-stream (io/file "dev-resources/descriptor.descriptorset.out")))
+          ]
+      (ser temp cos)
+      (.flush cos)
+      ;(into [] (.toByteArray os))
+      )
+    ;(.close os)
+    )
 
   )
