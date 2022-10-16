@@ -48,6 +48,14 @@
     "TYPE_SINT32" 0
     "TYPE_SINT64" 0))
 
+(defn must-be-packed? [primitive]
+  (= primitive "TYPE_MESSAGE"))
+
+(defn can-be-packed? [primitive]
+  (case primitive          ;do not parse non-packed form for string and bytes
+    ("TYPE_STRING" "TYPE_BYTES") false
+    true))
+
 (defn primitive-parser [primitive]
   (case primitive
     "TYPE_DOUBLE" serde/cis->Double
@@ -126,13 +134,11 @@
                                      (primitive-parser primitive))]
                          (if (sequence? subtype)
                            (cond-> acc
-                                   (not= primitive "TYPE_MESSAGE") ;do not parse packed form for message
+                                   (not (must-be-packed? primitive)) ;do not parse packed form for message
                                    (assoc (serde/make-tag fieldnumber wire-type)
                                           (fn [acc ^CodedInputStream is]
                                             (update acc k (serde/cis->repeated deser is))))
-                                   (case primitive          ;do not parse non-packed form for string and bytes
-                                     ("TYPE_STRING" "TYPE_BYTES") false
-                                     true)
+                                   (can-be-packed? primitive)
                                    (assoc (serde/make-tag fieldnumber 2)
                                           (fn [acc ^CodedInputStream is]
                                             (update acc k (serde/cis->packedrepeated deser is)))))
